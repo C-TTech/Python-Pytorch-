@@ -1,0 +1,39 @@
+"""
+-------------------------------------
+Introduction to DL, NN with Python and Pytorch
+
+Numpy runs on CPU for numerical processing.  Pytorch is Numpy but for GPU.
+Neural Networks: Each weight being constantly updated.  CPU does big challenging calculations.  GPU good for many,
+small calculations, and therefore Neural Network calculations.
+A Tensor is an Array
+----------------------------------------
+"""
+
+import torch
+
+x = torch.Tensor([5, 3])
+y = torch.Tensor([2, 1])
+print(x * y)
+x = torch.zeros([2, 5])
+print(x)
+'''tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]])'''
+
+y = torch.rand([2, 5])
+print(y)
+'''tensor([[0.7694, 0.5844, 0.3536, 0.7132, 0.0801],
+        [0.4870, 0.8475, 0.3444, 0.9481, 0.9788]])'''
+
+y = y.view([1, 10])
+print(y)
+'''tensor([[0.8704, 0.1916, 0.5657, 0.8660, 0.0386, 0.0060, 0.8944, 0.1542, 0.5128,
+         0.6349]])'''
+
+'''
+ERROR
+from torch._C import *
+ImportError: numpy.core.multiarray failed to import
+SOLUTION
+pip install numpy -I
+https://github.com/pytorch/pytorch/issues/2731
+'''
