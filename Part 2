@@ -1,0 +1,141 @@
+"""
+-------------------------------------
+Data
+
+Input, manipulation and display of data
+    Train:Test split, Shuffling, Scaling and Normalisation
+
+Torchvision data
+----------------------------------------
+"""
+
+import torch
+import torchvision
+from torchvision import transforms, datasets
+import torch.utils.data
+import matplotlib.pyplot as plt
+
+# Use out-of-sample testing data, that has never been seen by model before
+
+# MNIST is handdrawn digits (0-9) dataset.  28x28 images.
+# Downloads and stores Data as variables:
+train = datasets.MNIST("", train=True, download=True,
+                       transform=transforms.Compose([transforms.ToTensor()]))
+
+test = datasets.MNIST("", train=False, download=True,
+                      transform=transforms.Compose([transforms.ToTensor()]))
+# ---------------------------------------
+'''
+batch_size = how many items passed through each time.  Common batch size is 8 upto 64.
+Passing whole dataset at once denies the model the chance to optimise, iterate and learn the correct 
+assumptions/generalisations.  
+Shuffle randomises order of images.  Processing of all 0's then all 1's etc would result in the model optimising 
+for a digit and then having to readjust for next digit-set.  
+'''
+trainset = torch.utils.data.DataLoader(train, batch_size=10, shuffle=True)
+testset = torch.utils.data.DataLoader(test, batch_size=10, shuffle=True)
+
+for data in trainset:
+    print(data)
+    break
+'''
+Lis of tensors. The images in a batch.  
+[tensor([[[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]],
+
+
+        [[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]],
+
+
+        [[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]],
+
+
+        ...,
+
+
+        [[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]],
+
+
+        [[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]],
+
+
+        [[[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]]]]), tensor([3, 8, 3, 2, 1, 0, 9, 7, 3, 1])]
+
+'''
+# In a for loop the last temporary variable can still be accessed
+# x, y = data[0][0], data[1][0]
+# print(y)
+
+# print(data[0][0].shape)
+# Result equals torch.Size([1, 28, 28])
+
+
+plt.imshow(data[0][0].view(28, 28))
+plt.show()
+
+'''Models try to optimise and decrease loss, as best and easy as possible
+Finds quickest and easiest way to classify data.  Imbalanced datasets result in poor learning and performance
+Iterating and Balancing over Data
+Balancing:
+'''
+
+total = 0
+counter_dict = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
+
+for data in trainset:
+    Xs, ys = data
+    for y in ys:
+        counter_dict[int(y)] += 1
+        total += 1
+print(counter_dict)
+# Results in {0: 5923, 1: 6742, 2: 5958, 3: 6131, 4: 5842, 5: 5421, 6: 5918, 7: 6265, 8: 5851, 9: 5949}
+
+for i in counter_dict:
+    print(f"{i}: {counter_dict[i] / total * 100}")
+# Results in
+# % of dataset of each image subject
+# 0: 9.871666666666666
+# 1: 11.236666666666666
+# 2: 9.93
+# 3: 10.218333333333334
+# 4: 9.736666666666666
+# 5: 9.035
+# 6: 9.863333333333333
+# 7: 10.441666666666666
+# 8: 9.751666666666667
+# 9: 9.915000000000001
