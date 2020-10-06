@@ -1,0 +1,133 @@
+"""
+-------------------------------------
+Training the NN
+
+Basic, Feed Forward, Fully Connected
+
+Iterating over data, passing to the model, calculating loss from the result and
+backpropogation for fitment of model to data
+----------------------------------------
+"""
+import torch
+import torchvision
+from torchvision import transforms, datasets
+import torch.utils.data
+import matplotlib.pyplot as plt
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+# Use out-of-sample testing data, that has never been seen by model before
+
+# MNIST is handdrawn digits (0-9) dataset.  28x28 images.
+# Downloads and stores Data as variables:
+train = datasets.MNIST("", train=True, download=True,
+                       transform=transforms.Compose([transforms.ToTensor()]))
+
+test = datasets.MNIST("", train=False, download=True,
+                      transform=transforms.Compose([transforms.ToTensor()]))
+
+trainset = torch.utils.data.DataLoader(train, batch_size=10, shuffle=True)
+testset = torch.utils.data.DataLoader(test, batch_size=10, shuffle=True)
+
+
+# -----------------------------------------------------
+# Neural Network and Layers
+class Net(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(784, 64)  # (input aka 28*28, 3 layers of 64 neurons as hidden layers).  Input is into
+        # the layer and output could be anything
+        self.fc2 = nn.Linear(64, 64)  # Inputs are from previous layer(s)
+        self.fc3 = nn.Linear(64, 64)
+        self.fc4 = nn.Linear(64, 10)  # Output layer. 10 neurons because 10 classes
+
+    # Feed forward NN.  Defining how data passes through NN.  Can make advanced models with if, else for certain layers
+    # to suit application.  PYTORCH makes this simple.
+    # F.relu is activation function. Rectified linear not on final layer.
+    # Probability distribution required for output layer = log_softmax(x)
+    # Rectified linear for optimiser also
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
+        return F.log_softmax(x, dim=1)
+
+
+net = Net()
+print(net)
+'''
+Net(
+  (fc1): Linear(in_features=784, out_features=64, bias=True)
+  (fc2): Linear(in_features=64, out_features=64, bias=True)
+  (fc3): Linear(in_features=64, out_features=64, bias=True)
+  (fc4): Linear(in_features=64, out_features=10, bias=True)
+)
+'''
+# --------------------------------------------------------------
+
+# Image must be flattened before input into NN
+X = torch.rand((28, 28))
+X = X.view(1, 28 * 28)
+# -1 or 1 means that input is of an unknown shape.  "It's of any size"
+
+output = net(X)
+print(output)
+
+'''
+Predictions for 0,1,2,3,4,5,6,7,8,9:
+
+tensor([[-2.3052, -2.2803, -2.3709, -2.3176, -2.3912, -2.2335, -2.1736, -2.3258,
+         -2.2793, -2.3686]], grad_fn=<LogSoftmaxBackward>)
+
+grad_fn is gradient function.  
+Next, calculate how accurate the predictions are
+'''
+
+# Loss - error, lower confidence
+# Optimiser - Adjusts weights to lower loss
+# Transfer learning - Freeze first few layers and only allow final layer to adjust
+optimiser = optim.Adam(net.parameters(), lr=0.001)
+# Decaying learning rate reduces learning rate throughout learning
+
+EPOCHS = 3
+
+for epoch in range(EPOCHS):
+    for data in trainset:
+        # data is a batch of featuresets and labels
+        X, y = data
+        net.zero_grad()
+        # Batch size helps generalisation
+        output = net(X.view(-1, 28 * 28))
+        loss = F.nll_loss(output, y)  # One hot vector, mean squared error    # Scalar vector use nll_loss
+        loss.backward()
+        optimiser.step()
+    print(loss)
+'''
+tensor(0.1257, grad_fn=<NllLossBackward>)
+tensor(0.2009, grad_fn=<NllLossBackward>)
+tensor(0.0002, grad_fn=<NllLossBackward>)
+'''
+
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for data in trainset:
+        X, y = data
+        output = net(X.view(-1, 784))
+        for idx, i in enumerate(output):
+            if torch.argmax(i) == y[idx]:
+                correct += 1
+            total += 1
+
+print("Accuracy:  ", round(correct / total, 3))
+
+# Accuracy:   0.975
+# Accuracy:   0.981
+
+plt.imshow(X[0].view(28, 28))
+plt.show()
+print(torch.argmax(net(X[0].view(-1, 784)))[0])
